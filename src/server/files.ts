@@ -1,7 +1,16 @@
 import { promises as fs } from "node:fs";
 import { join, relative, extname } from "node:path";
 
+import { ResultAsync } from "neverthrow";
+
 import type { FileNode } from "../shared/types";
+
+export type FsError = NodeJS.ErrnoException;
+
+function toFsError(error: unknown): FsError {
+  if (error instanceof Error) return error as FsError;
+  return new Error(String(error)) as FsError;
+}
 
 async function getFilesRecursive(dirPath: string, basePath: string): Promise<FileNode[]> {
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
@@ -32,10 +41,10 @@ async function getFilesRecursive(dirPath: string, basePath: string): Promise<Fil
   });
 }
 
-export async function getFiles(dirPath: string, basePath: string): Promise<FileNode[]> {
-  return getFilesRecursive(dirPath, basePath);
+export function getFiles(dirPath: string, basePath: string): ResultAsync<FileNode[], FsError> {
+  return ResultAsync.fromPromise(getFilesRecursive(dirPath, basePath), toFsError);
 }
 
-export async function getFileContent(filePath: string): Promise<string> {
-  return fs.readFile(filePath, "utf-8");
+export function getFileContent(filePath: string): ResultAsync<string, FsError> {
+  return ResultAsync.fromPromise(fs.readFile(filePath, "utf-8"), toFsError);
 }

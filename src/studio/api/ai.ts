@@ -22,14 +22,18 @@ export const POST: APIRoute = async ({ request }) => {
       );
     }
 
-    const content = await editMarkdown(body.markdownContent, body.instruction);
+    const result = await editMarkdown(body.markdownContent, body.instruction);
 
-    return new Response(JSON.stringify({ content }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return result.match(
+      (content) =>
+        new Response(JSON.stringify({ content }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Something went wrong";
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    return new Response(JSON.stringify({ error: message }), { status: 400 });
   }
 };

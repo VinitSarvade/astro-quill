@@ -29,12 +29,16 @@ export const POST: APIRoute = async ({ request }) => {
 
     const result = await createPreviewPR(absolutePath, body.markdownContent);
 
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return result.match(
+      (data) =>
+        new Response(JSON.stringify(data), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Something went wrong";
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
+    return new Response(JSON.stringify({ error: message }), { status: 400 });
   }
 };

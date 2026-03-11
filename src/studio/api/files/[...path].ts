@@ -19,19 +19,17 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
   }
 
-  try {
-    const content = await getFileContent(requestedPath);
+  const result = await getFileContent(requestedPath);
 
-    return new Response(JSON.stringify({ content }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return new Response(JSON.stringify({ error: "File not found" }), { status: 404 });
-    }
-
-    const message = error instanceof Error ? error.message : "Something went wrong";
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
-  }
+  return result.match(
+    (content) =>
+      new Response(JSON.stringify({ content }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    (error) =>
+      error.code === "ENOENT"
+        ? new Response(JSON.stringify({ error: "File not found" }), { status: 404 })
+        : new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+  );
 };

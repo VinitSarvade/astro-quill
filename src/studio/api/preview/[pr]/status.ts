@@ -11,15 +11,14 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response(JSON.stringify({ error: "Invalid PR number" }), { status: 400 });
   }
 
-  try {
-    const result = await checkPRStatus(prNumber);
+  const result = await checkPRStatus(prNumber);
 
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Something went wrong";
-    return new Response(JSON.stringify({ error: message }), { status: 500 });
-  }
+  return result.match(
+    (data) =>
+      new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+  );
 };

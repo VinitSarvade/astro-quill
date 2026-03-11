@@ -17,7 +17,11 @@ export async function onRequest(context: APIContext, next: MiddlewareNext) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
       }
 
-      const isValid = await verifySessionCookie(sessionCookie, password);
+      const result = await verifySessionCookie(sessionCookie, password);
+      const isValid = result.match(
+        (value) => value,
+        () => false,
+      );
 
       if (!isValid) {
         return new Response(JSON.stringify({ error: "Invalid or expired session" }), {

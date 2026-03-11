@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from "jose";
+import { ResultAsync } from "neverthrow";
 
 let cachedSecret: Uint8Array | null = null;
 
@@ -20,12 +21,12 @@ export async function createSessionCookie(password: string): Promise<string> {
     .sign(secret);
 }
 
-export async function verifySessionCookie(token: string, password: string): Promise<boolean> {
-  try {
-    const secret = await getSecret(password);
-    await jwtVerify(token, secret);
-    return true;
-  } catch {
-    return false;
-  }
+export function verifySessionCookie(token: string, password: string): ResultAsync<boolean, Error> {
+  return ResultAsync.fromPromise(
+    getSecret(password).then(async (secret) => {
+      await jwtVerify(token, secret);
+      return true;
+    }),
+    (error) => (error instanceof Error ? error : new Error(String(error))),
+  );
 }
