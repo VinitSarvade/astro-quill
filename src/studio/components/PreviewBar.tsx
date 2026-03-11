@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface PreviewBarProps {
   filePath: string;
@@ -20,9 +20,20 @@ export default function PreviewBar({
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (status !== "polling" || !prNumber) return;
+
+    let cancelled = false;
 
     const poll = async () => {
       try {
@@ -38,10 +49,16 @@ export default function PreviewBar({
       } catch (err) {
         console.error("Polling error:", err);
       }
-      setTimeout(poll, 5000);
+      if (!cancelled) {
+        setTimeout(poll, 5000);
+      }
     };
 
     poll();
+
+    return () => {
+      cancelled = true;
+    };
   }, [status, prNumber]);
 
   const handleCreatePreview = async () => {
@@ -84,7 +101,7 @@ export default function PreviewBar({
       if (res.ok) {
         setStatus("published");
         onPublishSuccess();
-        setTimeout(() => {
+        resetTimeoutRef.current = setTimeout(() => {
           setStatus("idle");
           setPrNumber(null);
           setPrUrl(null);
@@ -127,7 +144,7 @@ export default function PreviewBar({
 
       {status === "polling" && (
         <div style={styles.statusContainer}>
-          <a href={prUrl!} target="_blank" rel="noreferrer" style={styles.link}>
+          <a href={prUrl ?? "#"} target="_blank" rel="noreferrer" style={styles.link}>
             View PR
           </a>
           <div style={styles.statusText}>⏳ Waiting for build...</div>
@@ -136,7 +153,7 @@ export default function PreviewBar({
 
       {status === "ready" && (
         <div style={styles.statusContainer}>
-          <a href={previewUrl!} target="_blank" rel="noreferrer" style={styles.linkPrimary}>
+          <a href={previewUrl ?? "#"} target="_blank" rel="noreferrer" style={styles.linkPrimary}>
             👁 View Preview
           </a>
           <button onClick={handlePublish} style={styles.buttonSuccess}>

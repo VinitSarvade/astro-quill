@@ -29,7 +29,10 @@ export const POST: APIRoute = async ({ request }) => {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-      (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+      (error) => {
+        console.error("Publish error:", error);
+        return new Response(JSON.stringify({ error: "Failed to publish changes" }), { status: 500 });
+      },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Something went wrong";

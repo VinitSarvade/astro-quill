@@ -19,6 +19,9 @@ export const GET: APIRoute = async ({ params }) => {
         status: 200,
         headers: { "Content-Type": "application/json" },
       }),
-    (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+    (error) => {
+      console.error("Preview status check error:", error);
+      return new Response(JSON.stringify({ error: "Failed to check preview status" }), { status: 500 });
+    },
   );
 };

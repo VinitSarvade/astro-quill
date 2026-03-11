@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { marked } from "marked";
 import React, { useState, useEffect } from "react";
 
@@ -20,7 +21,7 @@ export default function Editor({ filePath }: EditorProps) {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/studio/api/files/${encodeURIComponent(filePath)}`);
+        const res = await fetch(`/studio/api/files/${filePath.split("/").map(encodeURIComponent).join("/")}`);
         if (res.ok) {
           const data = await res.json();
           setMarkdown(data.content);
@@ -41,7 +42,10 @@ export default function Editor({ filePath }: EditorProps) {
   }, [filePath]);
 
   useEffect(() => {
-    Promise.resolve(marked.parse(markdown)).then((res) => setHtml(res as string));
+    (async () => {
+      const raw = await marked.parse(markdown);
+      setHtml(DOMPurify.sanitize(raw));
+    })();
   }, [markdown]);
 
   const hasChanges = markdown !== originalMarkdown;

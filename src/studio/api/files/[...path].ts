@@ -16,7 +16,7 @@ export const GET: APIRoute = async ({ params }) => {
   const contentDir = join(process.cwd(), "src", "content");
   const requestedPath = resolve(contentDir, pathParam);
 
-  if (!requestedPath.startsWith(resolve(contentDir))) {
+  if (!requestedPath.startsWith(resolve(contentDir) + "/")) {
     return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
   }
 

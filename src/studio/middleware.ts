@@ -7,6 +7,13 @@ export async function onRequest(context: APIContext, next: MiddlewareNext) {
   const url = new URL(context.request.url);
 
   if (url.pathname.startsWith("/studio/api/")) {
+    if (context.request.method === "POST") {
+      const contentType = context.request.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        return new Response(JSON.stringify({ error: "Invalid content type" }), { status: 415 });
+      }
+    }
+
     if (url.pathname !== "/studio/api/auth") {
       if (!password) {
         return new Response(JSON.stringify({ error: "Server misconfigured" }), { status: 500 });

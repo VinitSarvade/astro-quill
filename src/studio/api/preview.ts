@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import type { APIRoute } from "astro";
 import { match, P } from "ts-pattern";
@@ -24,9 +24,12 @@ export const POST: APIRoute = async ({ request }) => {
     if (validationResponse) return validationResponse;
 
     const contentDir = join(process.cwd(), "src", "content");
-    const absolutePath = join(contentDir, body.filePath);
+    const requestedPath = resolve(contentDir, body.filePath);
+    if (!requestedPath.startsWith(resolve(contentDir) + "/")) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+    }
 
-    const result = await createPreviewPR(absolutePath, body.markdownContent);
+    const result = await createPreviewPR(requestedPath, body.markdownContent);
 
     return result.match(
       (data) =>
@@ -34,7 +37,10 @@ export const POST: APIRoute = async ({ request }) => {
           status: 200,
           headers: { "Content-Type": "application/json" },
         }),
-      (error) => new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+      (error) => {
+        console.error("Preview creation error:", error);
+        return new Response(JSON.stringify({ error: "Failed to create preview" }), { status: 500 });
+      },
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Something went wrong";

@@ -10,8 +10,7 @@ export default function AiChat({ markdownContent, onMarkdownUpdate }: AiChatProp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitInstruction = async () => {
     if (!instruction.trim() || isLoading) return;
 
     setIsLoading(true);
@@ -39,6 +38,11 @@ export default function AiChat({ markdownContent, onMarkdownUpdate }: AiChatProp
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitInstruction();
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>AI Assistant</div>
@@ -64,7 +68,7 @@ export default function AiChat({ markdownContent, onMarkdownUpdate }: AiChatProp
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                handleSubmit(e);
+                submitInstruction();
               }
             }}
           />
