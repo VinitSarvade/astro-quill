@@ -1,0 +1,67 @@
+{
+  "name": "astro-quill",
+  "version": "1.0.0",
+  "description": "An Astro integration that ships a content editing studio at `/studio`. Editors log in, browse markdown content files, use AI to make changes, and publish via GitHub PR.",
+  "keywords": [
+    "ai",
+    "astro",
+    "astro-integration",
+    "cms",
+    "markdown"
+  ],
+  "license": "MIT",
+  "author": "",
+  "type": "module",
+  "main": "dist/integration/index.js",
+  "module": "dist/integration/index.js",
+  "types": "dist/integration/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/integration/index.mjs",
+      "types": "./dist/integration/index.d.mts",
+      "default": "./dist/integration/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/studio/styles.css -o ./dist/studio.css",
+    "build:ts": "tsdown",
+    "build": "bun run build:ts && bun run build:css",
+    "dev": "tsdown --watch",
+    "lint": "oxlint src",
+    "format": "oxfmt --write src"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.58",
+    "@ai-sdk/openai": "^3.0.41",
+    "@octokit/rest": "^22.0.1",
+    "@openrouter/ai-sdk-provider": "^2.2.5",
+    "ai": "^6.0.116",
+    "jose": "^6.2.1",
+    "marked": "^17.0.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@tailwindcss/cli": "^4.2.1",
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/marked": "^5.0.2",
+    "@types/node": "^25.4.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^6.0.2",
+    "autoprefixer": "^10.4.27",
+    "oxfmt": "^0.38.0",
+    "oxlint": "^1.53.0",
+    "postcss": "^8.5.8",
+    "rollup": "^4.59.0",
+    "rollup-plugin-dts": "^6.3.0",
+    "tailwindcss": "^4.2.1",
+    "ts-node": "^10.9.2",
+    "tsdown": "^0.21.1",
+    "typescript": "^5.9.3"
+  }
+}

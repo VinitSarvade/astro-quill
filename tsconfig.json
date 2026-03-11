@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "src/env.d.ts",
+    "src/integration/**/*.ts",
+    "src/server/**/*.ts",
+    "src/virtual/**/*.ts",
+    "src/studio/**/*.ts",
+    "src/studio/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
