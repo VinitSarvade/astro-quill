@@ -36,6 +36,12 @@ export default function StudioApp() {
     );
   }
 
+  const handleLogout = async () => {
+    await fetch("/studio/api/logout", { method: "POST" });
+    setIsAuthenticated(false);
+    setSelectedFilePath(null);
+  };
+
   if (!isAuthenticated) {
     return <Login onLogin={() => setIsAuthenticated(true)} />;
   }
@@ -52,6 +58,21 @@ export default function StudioApp() {
         }}
       >
         <Sidebar selectedFile={selectedFilePath} onSelectFile={setSelectedFilePath} />
+        <button
+          onClick={handleLogout}
+          style={{
+            margin: "0.5rem",
+            padding: "0.5rem",
+            backgroundColor: "transparent",
+            border: "1px solid #d1d5db",
+            borderRadius: "0.25rem",
+            color: "#6b7280",
+            cursor: "pointer",
+            fontSize: "0.875rem",
+          }}
+        >
+          Logout
+        </button>
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {selectedFilePath ? (

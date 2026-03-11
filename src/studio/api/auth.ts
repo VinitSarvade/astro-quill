@@ -14,12 +14,44 @@ function safeCompare(a: string, b: string): boolean {
   return timingSafeEqual(bufA, bufB);
 }
 
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const MAX_ATTEMPTS = 5;
+const WINDOW_MS = 15 * 60 * 1000;
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return false;
+  }
+
+  entry.count++;
+  return entry.count > MAX_ATTEMPTS;
+}
+
+function getClientIp(request: Request): string {
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    request.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
+
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   if (!configuredPassword) {
     return new Response(JSON.stringify({ error: "Studio password not configured" }), {
       status: 500,
+    });
+  }
+
+  const clientIp = getClientIp(request);
+  if (isRateLimited(clientIp)) {
+    return new Response(JSON.stringify({ error: "Too many attempts, try again later" }), {
+      status: 429,
     });
   }
 
@@ -33,9 +65,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         cookies.set("astro-quill-session", token, {
           path: "/studio",
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: new URL(request.url).protocol === "https:",
           sameSite: "lax",
-          maxAge: 60 * 60 * 24 * 7,
+          maxAge: 60 * 60 * 24,
         });
 
         return new Response(JSON.stringify({ success: true }), { status: 200 });

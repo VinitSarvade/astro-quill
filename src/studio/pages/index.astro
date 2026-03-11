@@ -1,17 +1,6 @@
 ---
 export const prerender = false;
-import { readFileSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import StudioApp from '../StudioApp';
-
-const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
-let cssContent = '';
-try {
-  cssContent = readFileSync(resolve(packageRoot, 'dist/studio.css'), 'utf8');
-} catch {
-  // CSS file may not exist during development
-}
 ---
 <html lang="en">
   <head>
@@ -19,7 +8,7 @@ try {
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
     <title>Astro Quill Studio</title>
-    <style set:html={cssContent}></style>
+    <link rel="stylesheet" href="/studio/studio.css" />
     <style>
       /* Base styles to prevent flash of unstyled content and ensure full height */
       html, body {

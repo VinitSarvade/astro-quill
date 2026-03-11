@@ -41,6 +41,10 @@ export default function astroQuill(options?: AstroQuillOptions): AstroIntegratio
           entrypoint: resolve(packageRoot, "src/studio/api/auth.ts"),
         });
         injectRoute({
+          pattern: "/studio/api/logout",
+          entrypoint: resolve(packageRoot, "src/studio/api/logout.ts"),
+        });
+        injectRoute({
           pattern: "/studio/api/files",
           entrypoint: resolve(packageRoot, "src/studio/api/files.ts"),
         });

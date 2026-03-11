@@ -1,29 +1,40 @@
 import { SignJWT, jwtVerify } from "jose";
 import { ResultAsync } from "neverthrow";
 
-let cachedSecret: Uint8Array | null = null;
-
-async function getSecret(password: string): Promise<Uint8Array> {
-  if (cachedSecret) return cachedSecret;
+async function deriveSecret(password: string): Promise<Uint8Array> {
   const encoder = new TextEncoder();
-  const data = encoder.encode(password + "astro-quill-salt");
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-  cachedSecret = new Uint8Array(hashBuffer);
-  return cachedSecret;
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: encoder.encode("astro-quill-salt"),
+      iterations: 100000,
+      hash: "SHA-256",
+    },
+    keyMaterial,
+    256,
+  );
+  return new Uint8Array(bits);
 }
 
 export async function createSessionCookie(password: string): Promise<string> {
-  const secret = await getSecret(password);
+  const secret = await deriveSecret(password);
   return new SignJWT({ auth: true })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("7d")
+    .setExpirationTime("24h")
     .sign(secret);
 }
 
 export function verifySessionCookie(token: string, password: string): ResultAsync<boolean, Error> {
   return ResultAsync.fromPromise(
-    getSecret(password).then(async (secret) => {
+    deriveSecret(password).then(async (secret) => {
       await jwtVerify(token, secret);
       return true;
     }),

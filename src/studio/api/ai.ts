@@ -21,6 +21,13 @@ export const POST: APIRoute = async ({ request }) => {
 
     if (validationResponse) return validationResponse;
 
+    if (body.markdownContent.length > 100_000) {
+      return new Response(JSON.stringify({ error: "Markdown content too large" }), { status: 400 });
+    }
+    if (body.instruction.length > 5_000) {
+      return new Response(JSON.stringify({ error: "Instruction too long" }), { status: 400 });
+    }
+
     const result = await editMarkdown(body.markdownContent, body.instruction);
 
     return result.match(

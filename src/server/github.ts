@@ -144,6 +144,10 @@ export function mergeAndCleanup(prNumber: number): ResultAsync<void, Error> {
         const pr = await octokit.rest.pulls.get({ owner, repo, pull_number: prNumber });
         const headBranch = pr.data.head.ref;
 
+        if (!headBranch.startsWith("studio/edit-")) {
+          throw new Error("Can only merge PRs created by Astro Quill Studio");
+        }
+
         await octokit.rest.pulls.merge({
           owner,
           repo,
