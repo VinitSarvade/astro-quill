@@ -1,0 +1,47 @@
+---
+export const prerender = false;
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import StudioApp from '../StudioApp';
+
+const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+let cssContent = '';
+try {
+  cssContent = readFileSync(resolve(packageRoot, 'dist/studio.css'), 'utf8');
+} catch {
+  // CSS file may not exist during development
+}
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>Astro Quill Studio</title>
+    <style set:html={cssContent}></style>
+    <style>
+      /* Base styles to prevent flash of unstyled content and ensure full height */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, sans-serif;
+        background-color: #f9fafb;
+        color: #111827;
+      }
+      #root {
+        height: 100%;
+      }
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <StudioApp client:only="react" />
+    </div>
+  </body>
+</html>
