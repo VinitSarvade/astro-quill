@@ -4,6 +4,7 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, createGateway, type LanguageModel } from "ai";
 import { ok, err, ResultAsync, type Result } from "neverthrow";
 import { ai } from "virtual:astro-quill/config";
+import { aiApiKey } from "virtual:astro-quill/server";
 
 const providers = {
   openai: { factory: createOpenAI, defaultModel: "gpt-4o" },
@@ -16,16 +17,16 @@ function resolveModel(): Result<LanguageModel, Error> {
   if (!ai?.provider) {
     return err(new Error("No AI provider configured. Set `ai.provider` in your Astro Quill options."));
   }
-  if (!ai.apiKey) {
+  if (!aiApiKey) {
     return err(new Error("API key is required. Set `ai.apiKey` in your Astro Quill options."));
   }
 
-  const entry = providers[ai.provider as keyof typeof providers];
-  if (!entry) {
+  if (!Object.hasOwn(providers, ai.provider)) {
     return err(new Error(`Unsupported provider: "${ai.provider}"`));
   }
 
-  const client = entry.factory({ apiKey: ai.apiKey, baseURL: ai.baseURL });
+  const entry = providers[ai.provider as keyof typeof providers];
+  const client = entry.factory({ apiKey: aiApiKey, baseURL: ai.baseURL });
   return ok(client(ai.model || entry.defaultModel));
 }
 

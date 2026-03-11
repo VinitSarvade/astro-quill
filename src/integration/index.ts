@@ -6,6 +6,8 @@ import type { AstroIntegration } from "astro";
 import {
   virtualModuleName,
   resolvedVirtualModuleId,
+  virtualServerModuleName,
+  resolvedVirtualServerModuleId,
   virtualModuleDts,
 } from "../virtual/config";
 import type { AstroQuillOptions } from "./types";
@@ -75,13 +77,25 @@ export default function astroQuill(options?: AstroQuillOptions): AstroIntegratio
                 name: "vite-plugin-astro-quill",
                 resolveId(id) {
                   if (id === virtualModuleName) return resolvedVirtualModuleId;
+                  if (id === virtualServerModuleName) return resolvedVirtualServerModuleId;
                 },
-                load(id) {
+                load(id, loadOptions) {
                   if (id === resolvedVirtualModuleId) {
+                    const { apiKey: _aiKey, ...publicAi } = options?.ai ?? {};
+                    const { token: _ghToken, ...publicGithub } = options?.github ?? {};
+                    return `
+                      export const ai = ${JSON.stringify(publicAi)};
+                      export const github = ${JSON.stringify(publicGithub)};
+                    `;
+                  }
+                  if (id === resolvedVirtualServerModuleId) {
+                    if (!loadOptions?.ssr) {
+                      throw new Error("virtual:astro-quill/server can only be imported in server code");
+                    }
                     return `
                       export const password = ${JSON.stringify(options?.password)};
-                      export const ai = ${JSON.stringify(options?.ai)};
-                      export const github = ${JSON.stringify(options?.github)};
+                      export const aiApiKey = ${JSON.stringify(options?.ai?.apiKey)};
+                      export const githubToken = ${JSON.stringify(options?.github?.token)};
                     `;
                   }
                 },

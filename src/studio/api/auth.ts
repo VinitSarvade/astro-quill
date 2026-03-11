@@ -2,7 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 
 import type { APIRoute } from "astro";
 import { match, P } from "ts-pattern";
-import { password as configuredPassword } from "virtual:astro-quill/config";
+import { password as configuredPassword } from "virtual:astro-quill/server";
 
 import { createSessionCookie } from "../../server/auth";
 

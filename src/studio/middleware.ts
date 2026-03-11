@@ -1,5 +1,5 @@
 import type { APIContext, MiddlewareNext } from "astro";
-import { password } from "virtual:astro-quill/config";
+import { password } from "virtual:astro-quill/server";
 
 import { verifySessionCookie } from "../server/auth";
 

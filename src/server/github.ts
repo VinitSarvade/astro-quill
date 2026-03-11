@@ -3,6 +3,7 @@ import { relative, join } from "node:path";
 import { Octokit } from "@octokit/rest";
 import { ok, err, ResultAsync, type Result } from "neverthrow";
 import { github } from "virtual:astro-quill/config";
+import { githubToken } from "virtual:astro-quill/server";
 
 let octokitInstance: Octokit | null = null;
 
@@ -14,11 +15,11 @@ interface GitHubConfig {
 }
 
 function getGitHubConfig(): Result<GitHubConfig, Error> {
-  if (!github?.token) return err(new Error("GitHub token not configured"));
+  if (!githubToken) return err(new Error("GitHub token not configured"));
   if (!github?.owner || !github?.repo) return err(new Error("GitHub owner or repo not configured"));
 
   if (!octokitInstance) {
-    octokitInstance = new Octokit({ auth: github.token });
+    octokitInstance = new Octokit({ auth: githubToken });
   }
 
   return ok({

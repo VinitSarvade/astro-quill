@@ -5,5 +5,5 @@ export default defineConfig({
   format: ["esm"],
   dts: true,
   clean: true,
-  external: ["astro", "@octokit/rest", "@anthropic-ai/sdk", "virtual:astro-quill/config"],
+  external: ["astro", "@octokit/rest", "@anthropic-ai/sdk", "virtual:astro-quill/config", "virtual:astro-quill/server"],
 });
