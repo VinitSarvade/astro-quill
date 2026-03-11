@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { match, P } from "ts-pattern";
 
 import { mergeAndCleanup } from "../../server/github";
 
@@ -8,12 +9,17 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
 
-    if (!body.prNumber || typeof body.prNumber !== "number") {
-      return new Response(
-        JSON.stringify({ error: "Invalid payload: expected prNumber (number)" }),
-        { status: 400 },
+    const validationResponse = match(body)
+      .with({ prNumber: P.number }, () => null)
+      .otherwise(
+        () =>
+          new Response(
+            JSON.stringify({ error: "Invalid payload: expected prNumber (number)" }),
+            { status: 400 },
+          ),
       );
-    }
+
+    if (validationResponse) return validationResponse;
 
     const result = await mergeAndCleanup(body.prNumber);
 

@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
-import { password } from "virtual:astro-quill/config";
+import { match, P } from "ts-pattern";
+import { password as configuredPassword } from "virtual:astro-quill/config";
 
 import { createSessionCookie } from "../../server/auth";
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  if (!password) {
+  if (!configuredPassword) {
     return new Response(JSON.stringify({ error: "Studio password not configured" }), {
       status: 500,
     });
@@ -15,25 +16,23 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   try {
     const body = await request.json();
 
-    if (!body.password || typeof body.password !== "string") {
-      return new Response(JSON.stringify({ error: "Password is required" }), { status: 400 });
-    }
+    const response = await match(body)
+      .with({ password: P.when((p) => p === configuredPassword) }, async () => {
+        const token = await createSessionCookie(configuredPassword);
 
-    if (body.password === password) {
-      const token = await createSessionCookie(password);
+        cookies.set("astro-quill-session", token, {
+          path: "/studio",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7,
+        });
 
-      cookies.set("astro-quill-session", token, {
-        path: "/studio",
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7,
-      });
+        return new Response(JSON.stringify({ success: true }), { status: 200 });
+      })
+      .otherwise(() => new Response(JSON.stringify({ error: "Invalid password" }), { status: 401 }));
 
-      return new Response(JSON.stringify({ success: true }), { status: 200 });
-    }
-
-    return new Response(JSON.stringify({ error: "Invalid password" }), { status: 401 });
+    return response;
   } catch (err) {
     return new Response(JSON.stringify({ error: "Bad request" }), { status: 400 });
   }

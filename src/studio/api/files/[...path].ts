@@ -1,6 +1,7 @@
 import { join, resolve } from "node:path";
 
 import type { APIRoute } from "astro";
+import { match } from "ts-pattern";
 
 import { getFileContent } from "../../../server/files";
 
@@ -28,8 +29,12 @@ export const GET: APIRoute = async ({ params }) => {
         headers: { "Content-Type": "application/json" },
       }),
     (error) =>
-      error.code === "ENOENT"
-        ? new Response(JSON.stringify({ error: "File not found" }), { status: 404 })
-        : new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+      match(error.code)
+        .with("ENOENT", () =>
+          new Response(JSON.stringify({ error: "File not found" }), { status: 404 }),
+        )
+        .otherwise(() =>
+          new Response(JSON.stringify({ error: error.message }), { status: 500 }),
+        ),
   );
 };

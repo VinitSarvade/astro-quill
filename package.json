@@ -43,6 +43,7 @@
     "marked": "^17.0.4",
     "neverthrow": "^8.2.0",
     "react": "^19.2.4",
+    "ts-pattern": "^5.9.0",
     "react-dom": "^19.2.4"
   },
   "devDependencies": {
