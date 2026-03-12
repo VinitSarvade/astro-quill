@@ -1,18 +1,53 @@
-import DOMPurify from "dompurify";
-import { marked } from "marked";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import AiChat from "./AiChat";
+import FrontmatterEditor from "./FrontmatterEditor";
 import PreviewBar from "./PreviewBar";
 
 interface EditorProps {
   filePath: string;
 }
 
+type FrontmatterEntry = { key: string; value: string };
+
+function parseFrontmatter(raw: string): { entries: FrontmatterEntry[]; body: string } {
+  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { entries: [], body: raw };
+
+  const yamlBlock = match[1];
+  const body = match[2];
+  const entries: FrontmatterEntry[] = [];
+
+  for (const line of yamlBlock.split("\n")) {
+    const colonIdx = line.indexOf(":");
+    if (colonIdx === -1) continue;
+    const key = line.slice(0, colonIdx).trim();
+    const value = line.slice(colonIdx + 1).trim().replace(/^["']|["']$/g, "");
+    if (key) entries.push({ key, value });
+  }
+
+  return { entries, body };
+}
+
+function assembleFrontmatter(entries: FrontmatterEntry[], body: string): string {
+  if (entries.length === 0) return body;
+
+  const yaml = entries
+    .filter((e) => e.key.trim())
+    .map((e) => {
+      const needsQuotes = /[:#{}[\],&*?|>!%@`]/.test(e.value) || /^\s|\s$/.test(e.value);
+      const val = needsQuotes ? `"${e.value.replace(/"/g, '\\"')}"` : e.value;
+      return `${e.key}: ${val}`;
+    })
+    .join("\n");
+
+  return `---\n${yaml}\n---\n${body}`;
+}
+
 export default function Editor({ filePath }: EditorProps) {
-  const [markdown, setMarkdown] = useState("");
-  const [originalMarkdown, setOriginalMarkdown] = useState("");
-  const [html, setHtml] = useState("");
+  const [frontmatter, setFrontmatter] = useState<FrontmatterEntry[]>([]);
+  const [body, setBody] = useState("");
+  const [originalFullContent, setOriginalFullContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +59,10 @@ export default function Editor({ filePath }: EditorProps) {
         const res = await fetch(`/studio/api/files/${filePath.split("/").map(encodeURIComponent).join("/")}`);
         if (res.ok) {
           const data = await res.json();
-          setMarkdown(data.content);
-          setOriginalMarkdown(data.content);
+          const { entries, body: parsedBody } = parseFrontmatter(data.content);
+          setFrontmatter(entries);
+          setBody(parsedBody);
+          setOriginalFullContent(data.content);
         } else {
           setError("Failed to load file content.");
         }
@@ -41,14 +78,14 @@ export default function Editor({ filePath }: EditorProps) {
     }
   }, [filePath]);
 
-  useEffect(() => {
-    (async () => {
-      const raw = await marked.parse(markdown);
-      setHtml(DOMPurify.sanitize(raw));
-    })();
-  }, [markdown]);
+  const fullContent = assembleFrontmatter(frontmatter, body);
+  const hasChanges = fullContent !== originalFullContent;
 
-  const hasChanges = markdown !== originalMarkdown;
+  const handleAiUpdate = useCallback((newMarkdown: string) => {
+    const { entries, body: newBody } = parseFrontmatter(newMarkdown);
+    setFrontmatter(entries);
+    setBody(newBody);
+  }, []);
 
   if (isLoading) {
     return <div style={styles.centerMessage}>Loading {filePath}...</div>;
@@ -64,39 +101,28 @@ export default function Editor({ filePath }: EditorProps) {
         <div style={styles.filePath}>{filePath}</div>
         <PreviewBar
           filePath={filePath}
-          currentMarkdown={markdown}
+          currentMarkdown={fullContent}
           hasChanges={hasChanges}
-          onPublishSuccess={() => setOriginalMarkdown(markdown)}
+          onPublishSuccess={() => setOriginalFullContent(fullContent)}
         />
       </div>
 
-      <div style={styles.mainArea}>
-        {/* Left pane: Preview */}
-        <div style={styles.pane}>
-          <div style={styles.paneHeader}>Preview</div>
-          <div
-            style={styles.previewContent}
-            className="markdown-body"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        </div>
+      <FrontmatterEditor entries={frontmatter} onChange={setFrontmatter} />
 
-        {/* Right pane: Markdown source */}
-        <div style={{ ...styles.pane, borderLeft: "1px solid #e5e7eb" }}>
-          <div style={styles.paneHeader}>Markdown</div>
+      <div style={styles.mainArea}>
+        <div style={styles.pane}>
           <textarea
             style={styles.textarea}
-            value={markdown}
-            onChange={(e) => setMarkdown(e.target.value)}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
             spellCheck={false}
           />
         </div>
 
-        {/* AI Chat sidebar */}
         <div style={styles.chatSidebar}>
           <AiChat
-            markdownContent={markdown}
-            onMarkdownUpdate={(newMarkdown) => setMarkdown(newMarkdown)}
+            markdownContent={fullContent}
+            onMarkdownUpdate={handleAiUpdate}
           />
         </div>
       </div>
@@ -134,24 +160,6 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     minWidth: 0,
-  },
-  paneHeader: {
-    padding: "0.5rem 1rem",
-    backgroundColor: "#f9fafb",
-    borderBottom: "1px solid #e5e7eb",
-    fontSize: "0.75rem",
-    fontWeight: "600",
-    textTransform: "uppercase",
-    color: "#6b7280",
-    letterSpacing: "0.05em",
-  },
-  previewContent: {
-    flex: 1,
-    padding: "2rem",
-    overflowY: "auto",
-    backgroundColor: "#ffffff",
-    color: "#374151",
-    lineHeight: "1.6",
   },
   textarea: {
     flex: 1,
