@@ -37,7 +37,10 @@ export default function StudioApp() {
   }
 
   const handleLogout = async () => {
-    await fetch("/studio/api/logout", { method: "POST" });
+    await fetch("/studio/api/logout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
     setIsAuthenticated(false);
     setSelectedFilePath(null);
   };

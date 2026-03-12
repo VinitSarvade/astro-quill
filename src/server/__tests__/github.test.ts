@@ -57,7 +57,7 @@ beforeEach(() => {
 });
 
 async function importGithubModule() {
-  return import("/Users/vinit/Projects/astro-quill/src/server/github.ts");
+  return import("/Users/vinit/Projects/astro-quill/src/server/github");
 }
 
 describe("createPreviewPR", () => {

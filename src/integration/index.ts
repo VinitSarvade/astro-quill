@@ -76,6 +76,11 @@ export default function astroQuill(options?: AstroQuillOptions): AstroIntegratio
 
         updateConfig({
           vite: {
+            server: {
+              fs: {
+                allow: [packageRoot],
+              },
+            },
             plugins: [
               {
                 name: "vite-plugin-astro-quill",

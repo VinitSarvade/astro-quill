@@ -59,8 +59,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const body = await request.json();
 
     const response = await match(body)
-      .with({ password: P.when((p) => safeCompare(p, configuredPassword)) }, async () => {
-        const token = await createSessionCookie(configuredPassword);
+      .with({ password: P.when((p): p is string => typeof p === "string" && safeCompare(p, configuredPassword!)) }, async () => {
+        const token = await createSessionCookie(configuredPassword!);
 
         cookies.set("astro-quill-session", token, {
           path: "/studio",
